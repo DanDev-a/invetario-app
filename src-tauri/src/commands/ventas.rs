@@ -144,10 +144,10 @@ pub fn create_venta(state: State<'_, DbState>, data: CreateVenta) -> Result<Vent
         .map_err(|e| e.to_string())
     })();
 
-    match &result {
-        Ok(_) => conn.execute("COMMIT", []).map_err(|e| e.to_string())?,
-        Err(_) => conn.execute("ROLLBACK", []).map_err(|e| e.to_string())?,
-    }
+    let _ = match &result {
+        Ok(_) => conn.execute("COMMIT", []),
+        Err(_) => conn.execute("ROLLBACK", []),
+    };
 
     result
 }
