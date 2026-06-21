@@ -1,7 +1,9 @@
 pub mod categorias;
-pub mod productos;
-pub mod proveedores;
 pub mod clientes;
-pub mod ventas;
 pub mod compras;
 pub mod dashboard;
+pub mod productos;
+pub mod proveedores;
+pub mod resoluciones;
+pub mod tecnologias;
+pub mod ventas;

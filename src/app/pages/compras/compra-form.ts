@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { TauriService } from '../../services/tauri.service';
+import { ToastService } from '../../components/toast/toast';
 import type { Proveedor, ProductoConCategoria } from '../../models/interfaces';
 
 interface CompraItem {
@@ -48,7 +49,7 @@ interface CompraItem {
                     class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="" disabled selected>Seleccionar pantalla...</option>
               @for (p of productos(); track p.id) {
-                <option [value]="p.id">{{ p.nombre }} - {{ p.marca }} - P.Compra: {{ p.precio_compra | currency:'BOB' }}</option>
+                <option [value]="p.id">{{ p.nombre }} - {{ p.marca }} — P.Compra: {{ p.precio_compra | currency:'BOB' }}</option>
               }
             </select>
           </div>
@@ -78,7 +79,7 @@ interface CompraItem {
                     <td class="p-2 text-right">{{ item.precio_unitario | currency:'BOB' }}</td>
                     <td class="p-2 text-right font-medium">{{ (item.cantidad * item.precio_unitario) | currency:'BOB' }}</td>
                     <td class="p-2 text-right">
-                      <button (click)="removeItem(i)" class="text-red-500 hover:text-red-700 text-sm">X</button>
+                      <button (click)="removeItem(i)" class="text-red-500 hover:text-red-700 text-sm font-medium">Eliminar</button>
                     </td>
                   </tr>
                 }
@@ -116,13 +117,16 @@ export class CompraFormComponent implements OnInit {
   proveedores = signal<Proveedor[]>([]);
 
   constructor(
-    private tauri: TauriService,
+    private db: TauriService,
     private router: Router,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
-    this.tauri.listProductos().then(p => this.productos.set(p));
-    this.tauri.listProveedores().then(p => this.proveedores.set(p));
+    this.db.ready().then(() => {
+      this.db.listProductos().then(p => this.productos.set(p));
+      this.db.listProveedores().then(p => this.proveedores.set(p));
+    });
   }
 
   get total() {
@@ -154,7 +158,7 @@ export class CompraFormComponent implements OnInit {
 
   save() {
     if (this.items().length === 0) return;
-    this.tauri.createCompra({
+    this.db.createCompra({
       proveedor_id: this.proveedor_id,
       fecha: this.fecha,
       detalles: this.items().map(i => ({
@@ -162,7 +166,9 @@ export class CompraFormComponent implements OnInit {
         cantidad: i.cantidad,
         precio_unitario: i.precio_unitario,
       })),
-    }).then(() => this.router.navigate(['/compras']))
-      .catch(e => alert('Error: ' + e));
+    }).then(() => {
+      this.toast.success('Compra registrada');
+      this.router.navigate(['/compras']);
+    }).catch(e => this.toast.error('Error: ' + e));
   }
 }

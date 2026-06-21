@@ -58,7 +58,7 @@ pub fn get_dashboard(state: State<'_, DbState>) -> Result<DashboardData, String>
              FROM movimientos_stock m
              JOIN productos p ON m.producto_id = p.id
              ORDER BY m.created_at DESC
-             LIMIT 10",
+             LIMIT 20",
         )
         .map_err(|e| e.to_string())?;
 

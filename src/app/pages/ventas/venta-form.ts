@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { TauriService } from '../../services/tauri.service';
+import { ToastService } from '../../components/toast/toast';
 import type { Cliente, ProductoConCategoria } from '../../models/interfaces';
 
 interface VentaItem {
@@ -27,7 +28,7 @@ interface VentaItem {
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
             <select [(ngModel)]="cliente_id" name="cliente_id"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <option [ngValue]="null">Venta directa (sin cliente)</option>
               @for (c of clientes(); track c.id) {
                 <option [ngValue]="c.id">{{ c.nombre }}</option>
@@ -37,7 +38,7 @@ interface VentaItem {
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
             <input [(ngModel)]="fecha" name="fecha" type="date" required
-                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
           </div>
         </div>
 
@@ -45,10 +46,10 @@ interface VentaItem {
           <label class="block text-sm font-medium text-slate-700 mb-1">Agregar Producto</label>
           <div class="flex gap-2">
             <select #prodSelect (change)="addItem(prodSelect.value); prodSelect.value=''"
-                    class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <option value="" disabled selected>Seleccionar pantalla...</option>
               @for (p of productos(); track p.id) {
-                <option [value]="p.id">{{ p.nombre }} - {{ p.marca }} (Stock: {{ p.stock_actual }}) - {{ p.precio_venta | currency:'BOB' }}</option>
+                <option [value]="p.id">{{ p.nombre }} - {{ p.marca }} (Stock: {{ p.stock_actual }}) — {{ p.precio_venta | currency:'BOB' }}</option>
               }
             </select>
           </div>
@@ -78,7 +79,7 @@ interface VentaItem {
                     <td class="p-2 text-right">{{ item.precio_unitario | currency:'BOB' }}</td>
                     <td class="p-2 text-right font-medium">{{ (item.cantidad * item.precio_unitario) | currency:'BOB' }}</td>
                     <td class="p-2 text-right">
-                      <button (click)="removeItem(i)" class="text-red-500 hover:text-red-700 text-sm">X</button>
+                      <button (click)="removeItem(i)" class="text-red-500 hover:text-red-700 text-sm font-medium">Eliminar</button>
                     </td>
                   </tr>
                 }
@@ -116,13 +117,16 @@ export class VentaFormComponent implements OnInit {
   clientes = signal<Cliente[]>([]);
 
   constructor(
-    private tauri: TauriService,
+    private db: TauriService,
     private router: Router,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
-    this.tauri.listProductos().then(p => this.productos.set(p));
-    this.tauri.listClientes().then(c => this.clientes.set(c));
+    this.db.ready().then(() => {
+      this.db.listProductos().then(p => this.productos.set(p));
+      this.db.listClientes().then(c => this.clientes.set(c));
+    });
   }
 
   get total() {
@@ -154,7 +158,7 @@ export class VentaFormComponent implements OnInit {
 
   save() {
     if (this.items().length === 0) return;
-    this.tauri.createVenta({
+    this.db.createVenta({
       cliente_id: this.cliente_id,
       fecha: this.fecha,
       detalles: this.items().map(i => ({
@@ -162,7 +166,9 @@ export class VentaFormComponent implements OnInit {
         cantidad: i.cantidad,
         precio_unitario: i.precio_unitario,
       })),
-    }).then(() => this.router.navigate(['/ventas']))
-      .catch(e => alert('Error: ' + e));
+    }).then(() => {
+      this.toast.success('Venta registrada');
+      this.router.navigate(['/ventas']);
+    }).catch(e => this.toast.error('Error: ' + e));
   }
 }

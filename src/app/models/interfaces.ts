@@ -5,6 +5,18 @@ export interface Categoria {
   created_at: string;
 }
 
+export interface Tecnologia {
+  id: number;
+  nombre: string;
+  created_at: string;
+}
+
+export interface Resolucion {
+  id: number;
+  nombre: string;
+  created_at: string;
+}
+
 export interface Proveedor {
   id: number;
   nombre: string;
@@ -18,8 +30,8 @@ export interface Producto {
   nombre: string;
   marca: string;
   pulgadas: number | null;
-  resolucion: string;
-  tecnologia: string;
+  resolucion_id: number | null;
+  tecnologia_id: number | null;
   precio_compra: number;
   precio_venta: number;
   stock_actual: number;
@@ -33,8 +45,10 @@ export interface ProductoConCategoria {
   nombre: string;
   marca: string;
   pulgadas: number | null;
-  resolucion: string;
-  tecnologia: string;
+  resolucion_id: number | null;
+  resolucion_nombre: string | null;
+  tecnologia_id: number | null;
+  tecnologia_nombre: string | null;
   precio_compra: number;
   precio_venta: number;
   stock_actual: number;
@@ -120,8 +134,8 @@ export interface CreateProducto {
   nombre: string;
   marca: string;
   pulgadas: number | null;
-  resolucion: string;
-  tecnologia: string;
+  resolucion_id: number | null;
+  tecnologia_id: number | null;
   precio_compra: number;
   precio_venta: number;
   stock_actual: number;

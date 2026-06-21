@@ -2,7 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { TauriService } from '../../services/tauri.service';
-import type { Categoria } from '../../models/interfaces';
+import { ToastService } from '../../components/toast/toast';
+import type { Categoria, Tecnologia, Resolucion } from '../../models/interfaces';
 
 @Component({
   standalone: true,
@@ -18,7 +19,7 @@ import type { Categoria } from '../../models/interfaces';
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Nombre</label>
-            <input [(ngModel)]="nombre" name="nombre" required
+            <input [(ngModel)]="nombre" name="nombre" required #nameInput
                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           <div>
@@ -32,28 +33,23 @@ import type { Categoria } from '../../models/interfaces';
                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Resolución</label>
-            <select [(ngModel)]="resolucion" name="resolucion"
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tecnología</label>
+            <select [(ngModel)]="tecnologia_id" name="tecnologia_id"
                     class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Seleccionar...</option>
-              <option value="HD">HD (1366x768)</option>
-              <option value="Full HD">Full HD (1920x1080)</option>
-              <option value="2K">2K (2560x1440)</option>
-              <option value="4K">4K (3840x2160)</option>
-              <option value="8K">8K (7680x4320)</option>
+              <option [ngValue]="null">Seleccionar...</option>
+              @for (t of tecnologias(); track t.id) {
+                <option [ngValue]="t.id">{{ t.nombre }}</option>
+              }
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Tecnología</label>
-            <select [(ngModel)]="tecnologia" name="tecnologia"
+            <label class="block text-sm font-medium text-slate-700 mb-1">Resolución</label>
+            <select [(ngModel)]="resolucion_id" name="resolucion_id"
                     class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Seleccionar...</option>
-              <option value="LED">LED</option>
-              <option value="LCD">LCD</option>
-              <option value="OLED">OLED</option>
-              <option value="QLED">QLED</option>
-              <option value="Mini LED">Mini LED</option>
-              <option value="Plasma">Plasma</option>
+              <option [ngValue]="null">Seleccionar...</option>
+              @for (r of resoluciones(); track r.id) {
+                <option [ngValue]="r.id">{{ r.nombre }}</option>
+              }
             </select>
           </div>
           <div>
@@ -112,40 +108,48 @@ export class ProductoFormComponent implements OnInit {
   nombre = '';
   marca = '';
   pulgadas: number | null = null;
-  resolucion = '';
-  tecnologia = '';
+  resolucion_id: number | null = null;
+  tecnologia_id: number | null = null;
   precio_compra = 0;
   precio_venta = 0;
   stock_actual = 0;
   stock_minimo = 0;
   categoria_id: number | null = null;
   categorias = signal<Categoria[]>([]);
+  tecnologias = signal<Tecnologia[]>([]);
+  resoluciones = signal<Resolucion[]>([]);
 
   constructor(
-    private tauri: TauriService,
+    private db: TauriService,
     private router: Router,
     private route: ActivatedRoute,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
-    this.tauri.listCategorias().then(c => this.categorias.set(c));
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.isEdit = true;
-      this.editId = Number(id);
-      this.tauri.getProducto(this.editId).then(p => {
-        this.nombre = p.nombre;
-        this.marca = p.marca;
-        this.pulgadas = p.pulgadas;
-        this.resolucion = p.resolucion;
-        this.tecnologia = p.tecnologia;
-        this.precio_compra = p.precio_compra;
-        this.precio_venta = p.precio_venta;
-        this.stock_actual = p.stock_actual;
-        this.stock_minimo = p.stock_minimo;
-        this.categoria_id = p.categoria_id;
-      });
-    }
+    this.db.ready().then(() => {
+      this.db.listCategorias().then(c => this.categorias.set(c));
+      this.db.listTecnologias().then(t => this.tecnologias.set(t));
+      this.db.listResoluciones().then(r => this.resoluciones.set(r));
+
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id) {
+        this.isEdit = true;
+        this.editId = Number(id);
+        this.db.getProducto(this.editId).then(p => {
+          this.nombre = p.nombre;
+          this.marca = p.marca;
+          this.pulgadas = p.pulgadas;
+          this.resolucion_id = p.resolucion_id;
+          this.tecnologia_id = p.tecnologia_id;
+          this.precio_compra = p.precio_compra;
+          this.precio_venta = p.precio_venta;
+          this.stock_actual = p.stock_actual;
+          this.stock_minimo = p.stock_minimo;
+          this.categoria_id = p.categoria_id;
+        });
+      }
+    });
   }
 
   save() {
@@ -153,8 +157,8 @@ export class ProductoFormComponent implements OnInit {
       nombre: this.nombre,
       marca: this.marca,
       pulgadas: this.pulgadas,
-      resolucion: this.resolucion,
-      tecnologia: this.tecnologia,
+      resolucion_id: this.resolucion_id,
+      tecnologia_id: this.tecnologia_id,
       precio_compra: this.precio_compra,
       precio_venta: this.precio_venta,
       stock_actual: this.stock_actual,
@@ -162,10 +166,16 @@ export class ProductoFormComponent implements OnInit {
       categoria_id: this.categoria_id,
     };
 
-    const action = this.isEdit && this.editId
-      ? this.tauri.updateProducto({ ...data, id: this.editId }).then(() => this.router.navigate(['/productos']))
-      : this.tauri.createProducto(data).then(() => this.router.navigate(['/productos']));
-
-    action.catch(e => alert('Error: ' + e));
+    if (this.isEdit && this.editId) {
+      this.db.updateProducto({ ...data, id: this.editId }).then(() => {
+        this.toast.success('Pantalla actualizada');
+        this.router.navigate(['/productos']);
+      }).catch(e => this.toast.error('Error: ' + e));
+    } else {
+      this.db.createProducto(data).then(() => {
+        this.toast.success('Pantalla creada');
+        this.router.navigate(['/productos']);
+      }).catch(e => this.toast.error('Error: ' + e));
+    }
   }
 }

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 mod commands;
 mod db;
 mod models;
@@ -25,34 +23,35 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            // Categorias
             commands::categorias::list_categorias,
             commands::categorias::create_categoria,
             commands::categorias::update_categoria,
             commands::categorias::delete_categoria,
-            // Productos
+            commands::tecnologias::list_tecnologias,
+            commands::tecnologias::create_tecnologia,
+            commands::tecnologias::update_tecnologia,
+            commands::tecnologias::delete_tecnologia,
+            commands::resoluciones::list_resoluciones,
+            commands::resoluciones::create_resolucion,
+            commands::resoluciones::update_resolucion,
+            commands::resoluciones::delete_resolucion,
             commands::productos::list_productos,
             commands::productos::get_producto,
             commands::productos::create_producto,
             commands::productos::update_producto,
             commands::productos::delete_producto,
-            // Proveedores
             commands::proveedores::list_proveedores,
             commands::proveedores::create_proveedor,
             commands::proveedores::update_proveedor,
             commands::proveedores::delete_proveedor,
-            // Clientes
             commands::clientes::list_clientes,
             commands::clientes::create_cliente,
             commands::clientes::update_cliente,
             commands::clientes::delete_cliente,
-            // Ventas
             commands::ventas::list_ventas,
             commands::ventas::create_venta,
-            // Compras
             commands::compras::list_compras,
             commands::compras::create_compra,
-            // Dashboard
             commands::dashboard::get_dashboard,
         ])
         .run(tauri::generate_context!())

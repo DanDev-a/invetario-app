@@ -1,15 +1,19 @@
 pub mod categoria;
-pub mod proveedor;
-pub mod producto;
 pub mod cliente;
 pub mod compra;
-pub mod venta;
 pub mod movimiento;
+pub mod producto;
+pub mod proveedor;
+pub mod resolucion;
+pub mod tecnologia;
+pub mod venta;
 
 pub use categoria::*;
-pub use proveedor::*;
-pub use producto::*;
 pub use cliente::*;
 pub use compra::*;
-pub use venta::*;
 pub use movimiento::*;
+pub use producto::*;
+pub use proveedor::*;
+pub use resolucion::*;
+pub use tecnologia::*;
+pub use venta::*;

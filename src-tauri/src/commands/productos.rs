@@ -15,22 +15,30 @@ pub fn list_productos(
     let (sql, params): (String, Vec<Box<dyn rusqlite::types::ToSql>>) = if let Some(q) = search {
         let q = format!("%{}%", q);
         (
-            "SELECT p.id, p.nombre, p.marca, p.pulgadas, p.resolucion, p.tecnologia,
+            "SELECT p.id, p.nombre, p.marca, p.pulgadas,
+                    p.resolucion_id, r.nombre AS resolucion_nombre,
+                    p.tecnologia_id, t.nombre AS tecnologia_nombre,
                     p.precio_compra, p.precio_venta, p.stock_actual, p.stock_minimo,
                     p.categoria_id, c.nombre AS categoria_nombre, p.created_at
              FROM productos p
              LEFT JOIN categorias c ON p.categoria_id = c.id
+             LEFT JOIN tecnologias t ON p.tecnologia_id = t.id
+             LEFT JOIN resoluciones r ON p.resolucion_id = r.id
              WHERE p.nombre LIKE ?1 OR p.marca LIKE ?1
              ORDER BY p.nombre".to_string(),
             vec![Box::new(q)],
         )
     } else {
         (
-            "SELECT p.id, p.nombre, p.marca, p.pulgadas, p.resolucion, p.tecnologia,
+            "SELECT p.id, p.nombre, p.marca, p.pulgadas,
+                    p.resolucion_id, r.nombre AS resolucion_nombre,
+                    p.tecnologia_id, t.nombre AS tecnologia_nombre,
                     p.precio_compra, p.precio_venta, p.stock_actual, p.stock_minimo,
                     p.categoria_id, c.nombre AS categoria_nombre, p.created_at
              FROM productos p
              LEFT JOIN categorias c ON p.categoria_id = c.id
+             LEFT JOIN tecnologias t ON p.tecnologia_id = t.id
+             LEFT JOIN resoluciones r ON p.resolucion_id = r.id
              ORDER BY p.nombre".to_string(),
             vec![],
         )
@@ -46,15 +54,17 @@ pub fn list_productos(
                 nombre: row.get(1)?,
                 marca: row.get(2)?,
                 pulgadas: row.get(3)?,
-                resolucion: row.get(4)?,
-                tecnologia: row.get(5)?,
-                precio_compra: row.get(6)?,
-                precio_venta: row.get(7)?,
-                stock_actual: row.get(8)?,
-                stock_minimo: row.get(9)?,
-                categoria_id: row.get(10)?,
-                categoria_nombre: row.get(11)?,
-                created_at: row.get(12)?,
+                resolucion_id: row.get(4)?,
+                resolucion_nombre: row.get(5)?,
+                tecnologia_id: row.get(6)?,
+                tecnologia_nombre: row.get(7)?,
+                precio_compra: row.get(8)?,
+                precio_venta: row.get(9)?,
+                stock_actual: row.get(10)?,
+                stock_minimo: row.get(11)?,
+                categoria_id: row.get(12)?,
+                categoria_nombre: row.get(13)?,
+                created_at: row.get(14)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -70,7 +80,8 @@ pub fn list_productos(
 pub fn get_producto(state: State<'_, DbState>, id: i64) -> Result<Producto, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     conn.query_row(
-        "SELECT id, nombre, marca, pulgadas, resolucion, tecnologia,
+        "SELECT id, nombre, marca, pulgadas,
+                resolucion_id, tecnologia_id,
                 precio_compra, precio_venta, stock_actual, stock_minimo,
                 categoria_id, created_at
          FROM productos WHERE id = ?1",
@@ -81,8 +92,8 @@ pub fn get_producto(state: State<'_, DbState>, id: i64) -> Result<Producto, Stri
                 nombre: row.get(1)?,
                 marca: row.get(2)?,
                 pulgadas: row.get(3)?,
-                resolucion: row.get(4)?,
-                tecnologia: row.get(5)?,
+                resolucion_id: row.get(4)?,
+                tecnologia_id: row.get(5)?,
                 precio_compra: row.get(6)?,
                 precio_venta: row.get(7)?,
                 stock_actual: row.get(8)?,
@@ -102,15 +113,15 @@ pub fn create_producto(
 ) -> Result<Producto, String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     conn.execute(
-        "INSERT INTO productos (nombre, marca, pulgadas, resolucion, tecnologia,
+        "INSERT INTO productos (nombre, marca, pulgadas, resolucion_id, tecnologia_id,
                                 precio_compra, precio_venta, stock_actual, stock_minimo, categoria_id)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         rusqlite::params![
             data.nombre,
             data.marca,
             data.pulgadas,
-            data.resolucion,
-            data.tecnologia,
+            data.resolucion_id,
+            data.tecnologia_id,
             data.precio_compra,
             data.precio_venta,
             data.stock_actual,
@@ -121,8 +132,19 @@ pub fn create_producto(
     .map_err(|e| e.to_string())?;
 
     let id = conn.last_insert_rowid();
+
+    if data.stock_actual > 0 {
+        conn.execute(
+            "INSERT INTO movimientos_stock (producto_id, tipo, cantidad, referencia_tipo)
+             VALUES (?1, 'ENTRADA', ?2, 'INICIAL')",
+            rusqlite::params![id, data.stock_actual],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
     conn.query_row(
-        "SELECT id, nombre, marca, pulgadas, resolucion, tecnologia,
+        "SELECT id, nombre, marca, pulgadas,
+                resolucion_id, tecnologia_id,
                 precio_compra, precio_venta, stock_actual, stock_minimo,
                 categoria_id, created_at
          FROM productos WHERE id = ?1",
@@ -133,8 +155,8 @@ pub fn create_producto(
                 nombre: row.get(1)?,
                 marca: row.get(2)?,
                 pulgadas: row.get(3)?,
-                resolucion: row.get(4)?,
-                tecnologia: row.get(5)?,
+                resolucion_id: row.get(4)?,
+                tecnologia_id: row.get(5)?,
                 precio_compra: row.get(6)?,
                 precio_venta: row.get(7)?,
                 stock_actual: row.get(8)?,
@@ -151,16 +173,17 @@ pub fn create_producto(
 pub fn update_producto(state: State<'_, DbState>, data: UpdateProducto) -> Result<(), String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     conn.execute(
-        "UPDATE productos SET nombre = ?1, marca = ?2, pulgadas = ?3, resolucion = ?4,
-                              tecnologia = ?5, precio_compra = ?6, precio_venta = ?7,
+        "UPDATE productos SET nombre = ?1, marca = ?2, pulgadas = ?3,
+                              resolucion_id = ?4, tecnologia_id = ?5,
+                              precio_compra = ?6, precio_venta = ?7,
                               stock_actual = ?8, stock_minimo = ?9, categoria_id = ?10
          WHERE id = ?11",
         rusqlite::params![
             data.nombre,
             data.marca,
             data.pulgadas,
-            data.resolucion,
-            data.tecnologia,
+            data.resolucion_id,
+            data.tecnologia_id,
             data.precio_compra,
             data.precio_venta,
             data.stock_actual,
@@ -176,6 +199,8 @@ pub fn update_producto(state: State<'_, DbState>, data: UpdateProducto) -> Resul
 #[tauri::command]
 pub fn delete_producto(state: State<'_, DbState>, id: i64) -> Result<(), String> {
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM movimientos_stock WHERE producto_id = ?1", [id])
+        .map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM productos WHERE id = ?1", [id])
         .map_err(|e| e.to_string())?;
     Ok(())
