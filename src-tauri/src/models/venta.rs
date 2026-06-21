@@ -1,15 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DetalleVenta {
-    pub id: i64,
-    pub venta_id: i64,
-    pub producto_id: i64,
-    pub cantidad: i64,
-    pub precio_unitario: f64,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DetalleVentaConProducto {
     pub id: i64,
     pub venta_id: i64,
