@@ -56,6 +56,7 @@ import type { ProductoConCategoria } from '../../models/interfaces';
                 <th class="text-left p-3">Categoría</th>
                 <th class="text-left p-3">Tecnología</th>
                 <th class="text-left p-3">Resolución</th>
+                <th class="text-left p-3">Estado</th>
                 <th class="text-right p-3">Stock</th>
                 <th class="text-right p-3">P. Compra</th>
                 <th class="text-right p-3">P. Venta</th>
@@ -72,6 +73,13 @@ import type { ProductoConCategoria } from '../../models/interfaces';
                   </td>
                   <td class="p-3 text-xs text-slate-500">{{ p.tecnologia_nombre || '—' }}</td>
                   <td class="p-3 text-xs text-slate-500">{{ p.resolucion_nombre || '—' }}</td>
+                  <td class="p-3">
+                    @if (p.observaciones) {
+                      <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">Observada</span>
+                    } @else {
+                      <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">Buena</span>
+                    }
+                  </td>
                   <td class="p-3 text-right">
                     <span class="px-2 py-0.5 rounded text-xs font-medium"
                           [class.bg-red-100]="p.stock_actual <= p.stock_minimo"
@@ -118,6 +126,8 @@ export class ProductosListaComponent implements OnInit {
     this.loading.set(true);
     this.db.listProductos(q).then(p => {
       this.productos.set(p);
+      this.loading.set(false);
+    }).catch(() => {
       this.loading.set(false);
     });
   }

@@ -13,6 +13,7 @@ pub struct Producto {
     pub stock_actual: i64,
     pub stock_minimo: i64,
     pub categoria_id: Option<i64>,
+    pub observaciones: Option<String>,
     pub created_at: String,
 }
 
@@ -32,6 +33,7 @@ pub struct ProductoConCategoria {
     pub stock_minimo: i64,
     pub categoria_id: Option<i64>,
     pub categoria_nombre: Option<String>,
+    pub observaciones: Option<String>,
     pub created_at: String,
 }
 
@@ -47,6 +49,7 @@ pub struct CreateProducto {
     pub stock_actual: i64,
     pub stock_minimo: i64,
     pub categoria_id: Option<i64>,
+    pub observaciones: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -62,4 +65,5 @@ pub struct UpdateProducto {
     pub stock_actual: i64,
     pub stock_minimo: i64,
     pub categoria_id: Option<i64>,
+    pub observaciones: Option<String>,
 }

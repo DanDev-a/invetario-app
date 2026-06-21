@@ -53,6 +53,7 @@ pub fn run_migrations(conn: &Connection) -> Result<(), String> {
             stock_actual INTEGER NOT NULL DEFAULT 0,
             stock_minimo INTEGER NOT NULL DEFAULT 0,
             categoria_id INTEGER REFERENCES categorias(id) ON DELETE SET NULL,
+            observaciones TEXT DEFAULT '',
             created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
         );
 
@@ -136,6 +137,9 @@ pub fn run_migrations(conn: &Connection) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         }
     }
+
+    conn.execute_batch("ALTER TABLE productos ADD COLUMN observaciones TEXT DEFAULT ''")
+        .ok();
 
     Ok(())
 }

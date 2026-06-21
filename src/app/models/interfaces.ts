@@ -37,6 +37,7 @@ export interface Producto {
   stock_actual: number;
   stock_minimo: number;
   categoria_id: number | null;
+  observaciones?: string | null;
   created_at: string;
 }
 
@@ -55,6 +56,7 @@ export interface ProductoConCategoria {
   stock_minimo: number;
   categoria_id: number | null;
   categoria_nombre: string | null;
+  observaciones?: string | null;
   created_at: string;
 }
 
@@ -141,6 +143,7 @@ export interface CreateProducto {
   stock_actual: number;
   stock_minimo: number;
   categoria_id: number | null;
+  observaciones?: string | null;
 }
 
 export interface UpdateProducto extends CreateProducto {

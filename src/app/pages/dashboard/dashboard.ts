@@ -161,6 +161,8 @@ export class DashboardComponent implements OnInit {
     this.db.getDashboard().then(d => {
       this.data.set(d);
       this.loading.set(false);
+    }).catch(() => {
+      this.loading.set(false);
     });
   }
 }

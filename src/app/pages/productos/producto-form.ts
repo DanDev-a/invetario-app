@@ -85,6 +85,13 @@ import type { Categoria, Tecnologia, Resolucion } from '../../models/interfaces'
             <input [(ngModel)]="stock_minimo" name="stock_minimo" type="number"
                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Observaciones</label>
+              <textarea [(ngModel)]="observaciones" name="observaciones" rows="3"
+                        placeholder="Estado de la pantalla, detalles, etc."
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              ></textarea>
+            </div>
         </div>
 
         <div class="flex gap-3 pt-4">
@@ -115,6 +122,7 @@ export class ProductoFormComponent implements OnInit {
   stock_actual = 0;
   stock_minimo = 0;
   categoria_id: number | null = null;
+  observaciones = '';
   categorias = signal<Categoria[]>([]);
   tecnologias = signal<Tecnologia[]>([]);
   resoluciones = signal<Resolucion[]>([]);
@@ -147,6 +155,7 @@ export class ProductoFormComponent implements OnInit {
           this.stock_actual = p.stock_actual;
           this.stock_minimo = p.stock_minimo;
           this.categoria_id = p.categoria_id;
+          this.observaciones = p.observaciones ?? '';
         });
       }
     });
@@ -164,6 +173,7 @@ export class ProductoFormComponent implements OnInit {
       stock_actual: this.stock_actual,
       stock_minimo: this.stock_minimo,
       categoria_id: this.categoria_id,
+      observaciones: this.observaciones || null,
     };
 
     if (this.isEdit && this.editId) {
